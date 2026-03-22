@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Bookshelf</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f2eb;
+    --paper2: #edeae0;
+    --spine: #c8a96e;
+    --spine-dark: #9a7a45;
+    --muted: #7a7568;
+    --border: rgba(26,26,24,0.12);
+    --red: #c0392b;
+    --green: #2e7d5e;
+    --blue: #2c5f8a;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: .01em;
+  }
+  header h1 span { color: var(--spine); }
+
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* ── GOOGLE AUTH ── */
+  #auth-area { display: flex; align-items: center; gap: 10px; }
+  #signin-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: white; color: #333;
+    border: none; border-radius: var(--radius);
+    padding: 7px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  #signin-btn:hover { background: #f0f0f0; }
+  #signin-btn svg { width: 16px; height: 16px; }
+  #auth-status {
+    font-size: 12px; padding: 5px 10px;
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.8);
+  }
+  #auth-status.ok { color: #7ed4a8; border-color: #7ed4a8; }
+  #auth-status.err { color: #f08080; border-color: #f08080; }
+
+  /* ── SYNC BAR ── */
+  #sync-bar {
+    background: var(--paper2);
+    border-bottom: 1px solid var(--border);
+    padding: .5rem 2rem;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px; color: var(--muted);
+    flex-wrap: wrap;
+  }
+  #sync-bar button {
+    font-size: 12px; font-family: 'DM Sans', sans-serif;
+    padding: 4px 12px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent;
+    cursor: pointer; color: var(--ink);
+  }
+  #sync-bar button:hover { background: var(--border); }
+  #sync-bar button:disabled { opacity: .4; cursor: default; }
+  #sheet-link { color: var(--spine-dark); text-decoration: none; font-weight: 500; }
+  #sheet-link:hover { text-decoration: underline; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: #c8a020; }
+  .dot.red { background: var(--red); }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding: 1.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+
+  /* ── STATS ── */
+  .stats { display: flex; gap: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .stat {
+    background: white; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: .65rem 1.1rem;
+    min-width: 90px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--ink); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center;
+  }
+  .toolbar input[type=text], .toolbar select {
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 7px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: white; color: var(--ink);
+    outline: none;
+  }
+  .toolbar input[type=text] { flex: 1; min-width: 180px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--spine); }
+  #search { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%237a7568' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 10px center; padding-left: 32px; }
+
+  .add-btn {
+    background: var(--spine); color: white;
+    border: none; border-radius: var(--radius);
+    padding: 8px 18px; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; margin-left: auto;
+  }
+  .add-btn:hover { background: var(--spine-dark); }
+
+  /* ── GENRE SECTIONS ── */
+  .genre-block { margin-bottom: 1.75rem; }
+  .genre-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 500;
+    color: var(--ink);
+    border-bottom: 2px solid var(--spine);
+    padding-bottom: 6px; margin-bottom: .65rem;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .genre-count { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; }
+
+  /* ── BOOK TABLE ── */
+  .book-table { width: 100%; border-collapse: collapse; }
+  .book-table th {
+    text-align: left; font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); padding: 5px 10px 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .book-table td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .book-table tr:last-child td { border-bottom: none; }
+  .book-table tr:hover td { background: rgba(200,169,110,0.06); }
+  .col-title { width: 35%; }
+  .col-author { width: 25%; }
+  .col-shelf { width: 12%; }
+  .col-pos { width: 12%; }
+  .col-notes { width: auto; }
+  .col-actions { width: 50px; text-align: right; }
+
+  .book-title-cell { font-weight: 500; font-size: 14px; }
+  .book-author-cell { font-size: 13px; color: var(--muted); }
+  .location-pill {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 20px;
+    background: var(--paper2); color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  .notes-cell { font-size: 12px; color: var(--muted); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); padding: 3px 5px; border-radius: var(--radius);
+    font-size: 14px; line-height: 1;
+  }
+  .icon-btn:hover { background: var(--paper2); color: var(--ink); }
+
+  .empty-state { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,26,24,0.55); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--paper); border-radius: 6px;
+    width: min(480px, 94vw); padding: 1.75rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h2 {
+    font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500;
+    margin-bottom: 1.25rem; color: var(--ink);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { margin-bottom: .9rem; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: white; color: var(--ink); outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--spine); }
+  .form-group textarea { height: 70px; resize: vertical; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+  .btn-cancel {
+    background: none; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 18px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--ink);
+  }
+  .btn-cancel:hover { background: var(--paper2); }
+  .btn-save {
+    background: var(--ink); color: var(--paper); border: none; border-radius: var(--radius);
+    padding: 8px 22px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-save:hover { background: #333; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--ink); color: var(--paper);
+    padding: 10px 18px; border-radius: 4px; font-size: 13px;
+    opacity: 0; transform: translateY(8px);
+    transition: all .25s; pointer-events: none; z-index: 200;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── SETUP PANEL ── */
+  #setup-panel {
+    background: white; border: 1px solid var(--border); border-radius: 6px;
+    padding: 1.5rem; margin-bottom: 1.5rem; max-width: 540px;
+  }
+  #setup-panel h3 { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: .75rem; }
+  #setup-panel p { font-size: 13px; color: var(--muted); margin-bottom: .75rem; line-height: 1.6; }
+  #setup-panel input {
+    width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: white; outline: none; margin-bottom: 8px;
+  }
+  #setup-panel input:focus { border-color: var(--spine); }
+  #connect-sheet-btn {
+    background: var(--spine); color: white; border: none; border-radius: var(--radius);
+    padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  #connect-sheet-btn:hover { background: var(--spine-dark); }
+  #setup-panel .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── SCANNER MODAL ── */
+  #scanner-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,10,8,0.92); z-index: 300;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  #scanner-overlay.open { display: flex; }
+  #scanner-wrap {
+    position: relative; width: min(400px, 92vw);
+    background: black; border-radius: 8px; overflow: hidden;
+  }
+  #scanner-video { width: 100%; display: block; max-height: 60vh; object-fit: cover; }
+  .scan-frame {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .scan-box {
+    width: 72%; height: 28%;
+    border: 2px solid var(--spine);
+    border-radius: 6px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+    position: relative;
+  }
+  .scan-line {
+    position: absolute; left: 0; right: 0; top: 50%;
+    height: 2px; background: var(--spine);
+    animation: scanline 1.8s ease-in-out infinite;
+  }
+  @keyframes scanline { 0%,100%{top:10%} 50%{top:88%} }
+  #scan-status {
+    margin-top: 14px; font-size: 14px; color: rgba(255,255,255,0.75);
+    text-align: center; min-height: 20px;
+  }
+  #scan-status.found { color: #7ed4a8; font-weight: 500; }
+  #scan-status.err { color: #f08080; }
+  .scan-btns { display: flex; gap: 10px; margin-top: 14px; }
+  .scan-btns button {
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 8px 20px; border-radius: var(--radius); cursor: pointer; border: none;
+  }
+  #scan-close-btn { background: rgba(255,255,255,0.15); color: white; }
+  #scan-close-btn:hover { background: rgba(255,255,255,0.25); }
+  #scan-manual-btn { background: var(--spine); color: white; }
+  #scan-manual-btn:hover { background: var(--spine-dark); }
+
+  /* scan button in toolbar */
+  .scan-btn {
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: var(--radius);
+    padding: 8px 14px; font-size: 14px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .scan-btn:hover { background: #333; }
+
+  /* lookup spinner inside modal */
+  #lookup-status { font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 8px; min-height: 16px; }
+
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    header { padding: 1rem; }
+    .col-notes, .col-pos { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>My <span>Bookshelf</span></h1>
+  <div class="header-right">
+    <div id="auth-area">
+      <div id="auth-status">Not signed in</div>
+      <button id="setup-client-btn" onclick="openClientIdSetup()" style="background:rgba(255,255,255,0.12);color:var(--paper);border:1px solid rgba(255,255,255,0.25);border-radius:var(--radius);padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-right:4px">⚙ Setup</button>
+      <button id="signin-btn" onclick="handleAuth()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Client ID Setup Wizard -->
+<div class="modal-overlay" id="client-id-modal">
+  <div class="modal" style="max-width:520px">
+    <h2>Connect Google Sheets sync</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:1rem">
+      To sync with Google Sheets, you need a free Google OAuth Client ID. This is a one-time 3-minute setup — your Client ID is saved in your browser and never shared.
+    </p>
+    <div style="background:var(--paper2);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;font-size:13px;line-height:1.9">
+      <strong style="display:block;margin-bottom:.4rem">Step-by-step:</strong>
+      <span style="color:var(--muted)">1.</span> Go to <a href="https://console.cloud.google.com/projectcreate" target="_blank" style="color:var(--spine-dark);font-weight:500">console.cloud.google.com/projectcreate ↗</a><br>
+      <span style="color:var(--muted)">2.</span> Create a project (any name, e.g. "My Bookshelf")<br>
+      <span style="color:var(--muted)">3.</span> Go to <strong>APIs &amp; Services → Library</strong> — enable <strong>Google Sheets API</strong> and <strong>Google Drive API</strong><br>
+      <span style="color:var(--muted)">4.</span> Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</strong><br>
+      <span style="color:var(--muted)">5.</span> Choose <strong>Web application</strong><br>
+      <span style="color:var(--muted)">6.</span> Under <em>Authorised JavaScript origins</em> add: <code style="background:white;padding:1px 5px;border-radius:3px;font-size:12px" id="current-origin">loading…</code><br>
+      <span style="color:var(--muted)">7.</span> Click <strong>Create</strong> — copy the <strong>Client ID</strong> and paste below
+    </div>
+    <div class="form-group">
+      <label>Your Google OAuth Client ID</label>
+      <input id="client-id-input" type="text" placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com" style="font-size:12px">
+    </div>
+    <div id="client-id-error" style="font-size:12px;color:#c0392b;margin-top:-8px;margin-bottom:8px;display:none"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeClientIdSetup()">Cancel</button>
+      <button class="btn-save" onclick="saveClientId()">Save &amp; Sign in</button>
+    </div>
+  </div>
+</div>
+
+<div id="sync-bar">
+  <span class="dot" id="sync-dot"></span>
+  <span id="sync-label">Local only — sign in to sync</span>
+  <button id="sync-btn" onclick="syncNow()" disabled>↻ Sync now</button>
+  <button onclick="exportCSV()" title="Download as CSV">⬇ Export CSV</button>
+  <span id="sheet-link-wrap" style="display:none">
+    — <a id="sheet-link" href="#" target="_blank">Open in Google Sheets ↗</a>
+  </span>
+  <span id="last-sync" style="margin-left:auto"></span>
+</div>
+
+<main>
+  <div id="setup-panel">
+    <h3>Connect to Google Sheets</h3>
+    <p>Sign in with Google above, then either paste an existing Google Sheet URL/ID below, or leave blank to create a new sheet automatically.</p>
+    <input id="sheet-id-input" type="text" placeholder="Paste Sheet URL or ID (optional — leave blank to create new)">
+    <br>
+    <button id="connect-sheet-btn" onclick="connectSheet()" disabled>Connect Sheet</button>
+    <div class="hint" id="setup-hint">Sign in first to enable sheet connection.</div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search title or author…" oninput="render()">
+    <select id="genre-filter" onchange="render()">
+      <option value="">All genres</option>
+    </select>
+    <button class="scan-btn" onclick="openScanner()" title="Scan ISBN barcode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="9" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="18" y="3" width="3" height="18" rx="1"/></svg>
+      Scan ISBN
+    </button>
+    <button class="add-btn" onclick="openModal()">+ Add book</button>
+  </div>
+
+  <div id="books-container"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-heading">Add a book</h2>
+    <div id="lookup-status"></div>
+    <div class="form-group">
+      <label>ISBN (optional — for manual lookup)</label>
+      <div style="display:flex;gap:6px">
+        <input id="f-isbn" placeholder="e.g. 9780747532699" style="flex:1">
+        <button type="button" onclick="lookupISBN(document.getElementById('f-isbn').value)" style="padding:8px 12px;font-size:13px;background:var(--spine);color:white;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Look up</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input id="f-title" placeholder="Book title">
+    </div>
+    <div class="form-group">
+      <label>Author</label>
+      <input id="f-author" placeholder="Last, First">
+    </div>
+    <div class="form-group">
+      <label>Genre</label>
+      <select id="f-genre">
+        <option>Fiction</option><option>Science Fiction</option><option>Fantasy</option>
+        <option>Mystery / Thriller</option><option>Historical Fiction</option><option>Literary Fiction</option>
+        <option>Non-Fiction</option><option>Biography / Memoir</option><option>History</option>
+        <option>Science</option><option>Philosophy</option><option>Religious Studies</option>
+        <option>Theology</option><option>Self-Help</option><option>Academic / Textbook</option>
+        <option>English Second Language</option><option>Spanish Second Language</option>
+        <option>Music</option><option>Poetry</option><option>General</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bookshelf #</label>
+        <input id="f-shelf" type="text" placeholder="e.g. 1, A, Living Room">
+      </div>
+      <div class="form-group">
+        <label>Shelf position #</label>
+        <input id="f-pos" type="text" placeholder="e.g. 3, Top, Left">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="f-notes" placeholder="Any notes…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveBook()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scanner overlay -->
+<div id="scanner-overlay">
+  <div id="scanner-wrap">
+    <video id="scanner-video" autoplay playsinline muted></video>
+    <div class="scan-frame"><div class="scan-box"><div class="scan-line"></div></div></div>
+  </div>
+  <div id="scan-status">Point camera at the barcode on the back of the book</div>
+  <div class="scan-btns">
+    <button id="scan-close-btn" onclick="closeScanner()">Cancel</button>
+    <button id="scan-manual-btn" onclick="closeScanner();openModal()">Enter manually</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const SCOPES     = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+const SHEET_COLS = ['ID','Title','Author','Genre','Bookshelf','Position','Notes'];
+let CLIENT_ID    = localStorage.getItem('bookshelf_client_id') || '';
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+let books       = JSON.parse(localStorage.getItem('bookshelf_books') || '[]');
+let sheetId     = localStorage.getItem('bookshelf_sheetId') || '';
+let accessToken = '';
+let editId      = null;
+let syncing     = false;
+
+// Seed demo data if empty
+if (!books.length) {
+  books = [
+    {id:'1',title:'One Hundred Years of Solitude',author:'García Márquez, Gabriel',genre:'Literary Fiction',shelf:'1',pos:'Top',notes:'Masterpiece'},
+    {id:'2',title:'The Name of the Wind',         author:'Rothfuss, Patrick',        genre:'Fantasy',         shelf:'1',pos:'Middle',notes:''},
+    {id:'3',title:'Sapiens',                      author:'Harari, Yuval Noah',       genre:'History',         shelf:'2',pos:'Top',notes:''},
+    {id:'4',title:'Dune',                         author:'Herbert, Frank',           genre:'Science Fiction', shelf:'2',pos:'Middle',notes:''},
+  ];
+  save();
+}
+
+// ── PERSISTENCE ─────────────────────────────────────────────────────────────
+function save() { localStorage.setItem('bookshelf_books', JSON.stringify(books)); }
+
+// ── CLIENT ID SETUP WIZARD ──────────────────────────────────────────────────
+function openClientIdSetup() {
+  document.getElementById('current-origin').textContent = location.origin || 'file://';
+  document.getElementById('client-id-input').value = CLIENT_ID || '';
+  document.getElementById('client-id-error').style.display = 'none';
+  document.getElementById('client-id-modal').classList.add('open');
+}
+function closeClientIdSetup() {
+  document.getElementById('client-id-modal').classList.remove('open');
+}
+function saveClientId() {
+  const val = document.getElementById('client-id-input').value.trim();
+  const errEl = document.getElementById('client-id-error');
+  if (!val || !val.includes('.apps.googleusercontent.com')) {
+    errEl.textContent = 'That doesn\'t look like a valid Client ID. It should end in .apps.googleusercontent.com';
+    errEl.style.display = 'block';
+    return;
+  }
+  CLIENT_ID = val;
+  localStorage.setItem('bookshelf_client_id', CLIENT_ID);
+  errEl.style.display = 'none';
+  closeClientIdSetup();
+  // Reload GIS with new client ID then trigger sign-in
+  loadGIS(() => triggerSignIn());
+}
+
+// ── GOOGLE IDENTITY SERVICES (GIS) ──────────────────────────────────────────
+let gisLoaded = false;
+function loadGIS(cb) {
+  if (gisLoaded) { cb && cb(); return; }
+  const existing = document.getElementById('gis-script');
+  if (existing) existing.remove();
+  const s = document.createElement('script');
+  s.id = 'gis-script';
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => { gisLoaded = true; cb && cb(); };
+  s.onerror = () => toast('Could not load Google sign-in library. Check your connection.', 4000);
+  document.head.appendChild(s);
+}
+
+function triggerSignIn() {
+  if (!CLIENT_ID) { openClientIdSetup(); return; }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) {
+        setAuthStatus('err', 'Sign-in failed');
+        toast('Sign-in error: ' + resp.error, 5000);
+        return;
+      }
+      accessToken = resp.access_token;
+      setAuthStatus('ok', 'Signed in ✓');
+      document.getElementById('signin-btn').innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Sign out`;
+      document.getElementById('connect-sheet-btn').disabled = false;
+      document.getElementById('setup-hint').textContent = 'Now connect or create your sheet below.';
+      document.getElementById('sync-btn').disabled = false;
+      if (sheetId) {
+        document.getElementById('setup-panel').style.display = 'none';
+        syncNow();
+      }
+    }
+  });
+  client.requestAccessToken();
+}
+
+function handleAuth() {
+  if (accessToken) { signOut(); return; }
+  if (!CLIENT_ID) { openClientIdSetup(); return; }
+  if (!gisLoaded) { loadGIS(() => triggerSignIn()); return; }
+  triggerSignIn();
+}
+
+function signOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = '';
+  setAuthStatus('', 'Not signed in');
+  document.getElementById('signin-btn').innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Sign in with Google`;
+  document.getElementById('connect-sheet-btn').disabled = true;
+  document.getElementById('setup-hint').textContent = 'Sign in first to enable sheet connection.';
+  document.getElementById('sync-btn').disabled = true;
+  setSyncStatus('local');
+}
+
+function setAuthStatus(type, text) {
+  const el = document.getElementById('auth-status');
+  el.textContent = text;
+  el.className = type === 'ok' ? 'ok' : type === 'err' ? 'err' : '';
+}
+
+// ── GOOGLE SHEETS API ───────────────────────────────────────────────────────
+async function sheetsReq(method, path, body) {
+  const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets' + path, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function driveReq(method, path, body) {
+  const res = await fetch('https://www.googleapis.com/drive/v3' + path, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function connectSheet() {
+  if (!accessToken) { toast('Please sign in first.'); return; }
+  let raw = document.getElementById('sheet-id-input').value.trim();
+
+  try {
+    setSyncStatus('syncing');
+    // Extract ID from URL if needed
+    if (raw.includes('spreadsheets/d/')) {
+      const m = raw.match(/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      if (m) raw = m[1];
+    }
+
+    if (raw) {
+      // Verify existing sheet
+      await sheetsReq('GET', `/${raw}?fields=spreadsheetId,properties.title`);
+      sheetId = raw;
+      toast('Connected to existing sheet!');
+    } else {
+      // Create new sheet
+      const resp = await sheetsReq('POST', '', {
+        properties: { title: 'My Bookshelf' },
+        sheets: [{ properties: { title: 'Books' } }]
+      });
+      sheetId = resp.spreadsheetId;
+      toast('Created new sheet: My Bookshelf');
+    }
+
+    localStorage.setItem('bookshelf_sheetId', sheetId);
+    updateSheetLink();
+    document.getElementById('setup-panel').style.display = 'none';
+
+    // Push all data
+    await pushToSheet();
+    setSyncStatus('ok');
+  } catch (e) {
+    toast('Error: ' + e.message, 4000);
+    setSyncStatus('local');
+  }
+}
+
+async function pushToSheet() {
+  // Write header + all rows
+  const rows = [SHEET_COLS, ...books.map(b => [b.id, b.title, b.author, b.genre, b.shelf, b.pos, b.notes])];
+  await sheetsReq('PUT', `/${sheetId}/values/Books!A1?valueInputOption=RAW`, { values: rows });
+  localStorage.setItem('bookshelf_lastSync', new Date().toISOString());
+  updateLastSync();
+}
+
+async function pullFromSheet() {
+  const data = await sheetsReq('GET', `/${sheetId}/values/Books!A2:G?majorDimension=ROWS`);
+  const rows = data.values || [];
+  books = rows.filter(r => r[0]).map(r => ({
+    id:    r[0] || '',
+    title: r[1] || '',
+    author:r[2] || '',
+    genre: r[3] || '',
+    shelf: r[4] || '',
+    pos:   r[5] || '',
+    notes: r[6] || ''
+  }));
+  save();
+}
+
+async function syncNow() {
+  if (!accessToken || !sheetId || syncing) return;
+  syncing = true;
+  setSyncStatus('syncing');
+  try {
+    await pushToSheet();
+    await pullFromSheet();
+    setSyncStatus('ok');
+    toast('Synced with Google Sheets ✓');
+    render();
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Sync failed: ' + e.message, 4000);
+  }
+  syncing = false;
+}
+
+// ── SYNC STATUS UI ───────────────────────────────────────────────────────────
+function setSyncStatus(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'dot';
+  if (state === 'ok')      { dot.classList.add('green'); lbl.textContent = 'Synced with Google Sheets'; }
+  else if (state === 'syncing') { dot.classList.add('yellow'); lbl.textContent = 'Syncing…'; }
+  else if (state === 'error')   { dot.classList.add('red');    lbl.textContent = 'Sync error'; }
+  else                          {                              lbl.textContent = 'Local only — sign in to sync'; }
+}
+
+function updateSheetLink() {
+  if (!sheetId) return;
+  const wrap = document.getElementById('sheet-link-wrap');
+  const link = document.getElementById('sheet-link');
+  wrap.style.display = '';
+  link.href = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+}
+
+function updateLastSync() {
+  const ts = localStorage.getItem('bookshelf_lastSync');
+  const el = document.getElementById('last-sync');
+  if (ts) el.textContent = 'Last sync: ' + new Date(ts).toLocaleTimeString();
+}
+
+// ── BOOK CRUD ────────────────────────────────────────────────────────────────
+function openModal(id) {
+  editId = id || null;
+  if (id) {
+    const b = books.find(x => x.id === id);
+    document.getElementById('f-title').value  = b.title;
+    document.getElementById('f-author').value = b.author;
+    document.getElementById('f-genre').value  = b.genre;
+    document.getElementById('f-shelf').value  = b.shelf;
+    document.getElementById('f-pos').value    = b.pos;
+    document.getElementById('f-notes').value  = b.notes;
+    document.getElementById('modal-heading').textContent = 'Edit book';
+  } else {
+    ['f-isbn','f-title','f-author','f-shelf','f-pos','f-notes'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('f-genre').value = 'Fiction';
+    document.getElementById('modal-heading').textContent = 'Add a book';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function saveBook() {
+  const title  = document.getElementById('f-title').value.trim();
+  const author = document.getElementById('f-author').value.trim();
+  if (!title || !author) { toast('Title and author are required.'); return; }
+  const book = {
+    id:     editId || Date.now().toString(),
+    title, author,
+    genre:  document.getElementById('f-genre').value,
+    shelf:  document.getElementById('f-shelf').value.trim(),
+    pos:    document.getElementById('f-pos').value.trim(),
+    notes:  document.getElementById('f-notes').value.trim()
+  };
+  if (editId) {
+    const i = books.findIndex(x => x.id === editId);
+    books[i] = book;
+  } else {
+    books.push(book);
+  }
+  save();
+  closeModal();
+  render();
+  if (accessToken && sheetId) { setSyncStatus('syncing'); pushToSheet().then(() => setSyncStatus('ok')).catch(() => setSyncStatus('error')); }
+}
+
+function deleteBook(id) {
+  if (!confirm('Remove this book from your shelf?')) return;
+  books = books.filter(x => x.id !== id);
+  save();
+  render();
+  if (accessToken && sheetId) { setSyncStatus('syncing'); pushToSheet().then(() => setSyncStatus('ok')).catch(() => setSyncStatus('error')); }
+}
+
+// ── EXPORT CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [SHEET_COLS, ...books.map(b => [b.id, b.title, b.author, b.genre, b.shelf, b.pos, b.notes].map(v => `"${(v||'').replace(/"/g,'""')}"`))];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'bookshelf.csv';
+  a.click();
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+const GENRES = ['Fiction','Science Fiction','Fantasy','Mystery / Thriller','Historical Fiction','Literary Fiction','Non-Fiction','Biography / Memoir','History','Science','Philosophy','Religious Studies','Theology','Self-Help','Academic / Textbook','English Second Language','Spanish Second Language','Music','Poetry','General','Other'];
+
+function render() {
+  const q   = (document.getElementById('search').value || '').toLowerCase();
+  const gf  = document.getElementById('genre-filter').value;
+
+  let filtered = books.filter(b => {
+    const mq = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+    const mg = !gf || b.genre === gf;
+    return mq && mg;
+  });
+
+  // Stats
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${books.length}</div></div>
+    <div class="stat"><div class="stat-label">Genres</div><div class="stat-value">${[...new Set(books.map(b=>b.genre))].length}</div></div>
+    <div class="stat"><div class="stat-label">Shelves</div><div class="stat-value">${[...new Set(books.map(b=>b.shelf).filter(Boolean))].length}</div></div>
+    <div class="stat"><div class="stat-label">Showing</div><div class="stat-value">${filtered.length}</div></div>`;
+
+  // Genre filter dropdown
+  const usedGenres = [...new Set(books.map(b => b.genre))].sort();
+  const gSel = document.getElementById('genre-filter');
+  const prev = gSel.value;
+  gSel.innerHTML = '<option value="">All genres</option>' + usedGenres.map(g => `<option${g===prev?' selected':''}>${g}</option>`).join('');
+
+  // Group by genre then sort by author
+  const byGenre = {};
+  GENRES.forEach(g => byGenre[g] = []);
+  filtered.forEach(b => { if (byGenre[b.genre]) byGenre[b.genre].push(b); else { byGenre['Other'] = byGenre['Other']||[]; byGenre['Other'].push(b); } });
+
+  const activeGenres = GENRES.filter(g => byGenre[g] && byGenre[g].length);
+
+  if (!activeGenres.length) {
+    document.getElementById('books-container').innerHTML = '<div class="empty-state">No books found. Add your first one!</div>';
+    return;
+  }
+
+  document.getElementById('books-container').innerHTML = activeGenres.map(genre => {
+    const list = byGenre[genre].sort((a,b) => a.author.localeCompare(b.author));
+    return `<div class="genre-block">
+      <div class="genre-heading">
+        ${genre}
+        <span class="genre-count">${list.length} book${list.length>1?'s':''}</span>
+      </div>
+      <table class="book-table">
+        <colgroup>
+          <col class="col-title"><col class="col-author"><col class="col-shelf"><col class="col-pos"><col class="col-notes"><col class="col-actions">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Title</th><th>Author</th><th>Bookshelf</th><th>Shelf #</th><th>Notes</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(b => `<tr>
+            <td class="book-title-cell">${esc(b.title)}</td>
+            <td class="book-author-cell">${esc(b.author)}</td>
+            <td>${b.shelf ? `<span class="location-pill">${esc(b.shelf)}</span>` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+            <td>${b.pos  ? `<span class="location-pill">${esc(b.pos)}</span>`   : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+            <td class="notes-cell" title="${esc(b.notes)}">${esc(b.notes)||'—'}</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" onclick="openModal('${b.id}')" title="Edit">✎</button>
+                <button class="icon-btn" onclick="deleteBook('${b.id}')" title="Delete">×</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── BARCODE SCANNER ──────────────────────────────────────────────────────────
+let scannerStream = null;
+let scannerInterval = null;
+let zxing = null;
+
+async function openScanner() {
+  document.getElementById('scanner-overlay').classList.add('open');
+  setScanStatus('Starting camera…', '');
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = scannerStream;
+    await video.play();
+    setScanStatus('Point camera at the ISBN barcode', '');
+    await initZXing();
+    startScanning(video);
+  } catch(e) {
+    setScanStatus('Camera access denied or unavailable. Use manual entry.', 'err');
+  }
+}
+
+async function initZXing() {
+  if (zxing) return;
+  if (typeof ZXing === 'undefined') {
+    setScanStatus('Loading barcode library…', '');
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/@zxing/library@0.21.1/umd/index.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  zxing = new ZXing.BrowserMultiFormatReader();
+}
+
+function startScanning(video) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  scannerInterval = setInterval(async () => {
+    if (!video.videoWidth) return;
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    try {
+      const result = await zxing.decodeFromCanvas(canvas);
+      const code = result.getText();
+      if (/^97[89]\d{10}$/.test(code) || /^\d{10}$/.test(code)) {
+        clearInterval(scannerInterval);
+        setScanStatus('ISBN detected: ' + code, 'found');
+        setTimeout(async () => {
+          closeScanner();
+          await lookupISBN(code, true);
+        }, 600);
+      }
+    } catch(_) {}
+  }, 400);
+}
+
+function closeScanner() {
+  clearInterval(scannerInterval);
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+  document.getElementById('scanner-overlay').classList.remove('open');
+}
+
+function setScanStatus(msg, cls) {
+  const el = document.getElementById('scan-status');
+  el.textContent = msg;
+  el.className = cls || '';
+}
+
+// ── ISBN LOOKUP (Google Books + Open Library fallback) ───────────────────────
+const SUBJECT_GENRE_MAP = {
+  'fiction': 'Fiction', 'science fiction': 'Science Fiction', 'fantasy': 'Fantasy',
+  'mystery': 'Mystery / Thriller', 'thriller': 'Mystery / Thriller', 'crime': 'Mystery / Thriller',
+  'history': 'History', 'biography': 'Biography / Memoir', 'autobiography': 'Biography / Memoir',
+  'memoir': 'Biography / Memoir', 'science': 'Science', 'philosophy': 'Philosophy',
+  'religion': 'Religious Studies', 'theology': 'Theology', 'self-help': 'Self-Help',
+  'poetry': 'Poetry', 'music': 'Music', 'language': 'General',
+  'spanish': 'Spanish Second Language', 'english language': 'English Second Language',
+  'textbook': 'Academic / Textbook', 'historical fiction': 'Historical Fiction',
+  'literary fiction': 'Literary Fiction'
+};
+
+function guessGenre(subjects) {
+  if (!subjects || !subjects.length) return 'General';
+  const joined = subjects.map(s => (typeof s === 'string' ? s : s.name || '')).join(' ').toLowerCase();
+  for (const [key, genre] of Object.entries(SUBJECT_GENRE_MAP)) {
+    if (joined.includes(key)) return genre;
+  }
+  return 'General';
+}
+
+function formatAuthor(name) {
+  if (!name) return '';
+  const parts = name.trim().split(' ');
+  return parts.length > 1 ? parts[parts.length-1] + ', ' + parts.slice(0,-1).join(' ') : name;
+}
+
+async function lookupGoogleBooks(isbn) {
+  const res  = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+  const data = await res.json();
+  if (!data.items || !data.items.length) return null;
+  const info = data.items[0].volumeInfo;
+  return {
+    title:   info.title || '',
+    authors: (info.authors || []).map(formatAuthor).join('; '),
+    genre:   guessGenre(info.categories || []),
+    notes:   [(info.publisher || ''), (info.publishedDate || '').slice(0,4)].filter(Boolean).join(', ')
+  };
+}
+
+async function lookupOpenLibrary(isbn) {
+  const res  = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+  const data = await res.json();
+  const book = data[`ISBN:${isbn}`];
+  if (!book) return null;
+  return {
+    title:   book.title || '',
+    authors: (book.authors || []).map(a => formatAuthor(a.name)).join('; '),
+    genre:   guessGenre(book.subjects || []),
+    notes:   [(book.publishers||[]).map(p=>p.name).join(', '), book.publish_date||''].filter(Boolean).join(', ')
+  };
+}
+
+async function lookupISBN(isbn, autoOpen = false) {
+  isbn = (isbn || '').replace(/[^0-9X]/gi, '');
+  if (!isbn) { toast('Enter an ISBN first.'); return; }
+  setLookupStatus('Searching Google Books…');
+  if (autoOpen) openModal();
+  try {
+    // Try Google Books first — much larger catalogue
+    let result = await lookupGoogleBooks(isbn);
+
+    // Fall back to Open Library if not found
+    if (!result || !result.title) {
+      setLookupStatus('Trying Open Library…');
+      result = await lookupOpenLibrary(isbn);
+    }
+
+    if (!result || !result.title) {
+      setLookupStatus('Book not found in either database — please fill in the details manually.');
+      return;
+    }
+
+    document.getElementById('f-isbn').value   = isbn;
+    document.getElementById('f-title').value  = result.title;
+    document.getElementById('f-author').value = result.authors;
+    document.getElementById('f-genre').value  = result.genre;
+    document.getElementById('f-notes').value  = result.notes;
+    setLookupStatus('Found: ' + result.title + (result.authors ? ' — ' + result.authors : ''));
+  } catch(e) {
+    setLookupStatus('Lookup failed — check your connection or fill in manually.');
+  }
+}
+
+function setLookupStatus(msg) {
+  const el = document.getElementById('lookup-status');
+  if (el) el.textContent = msg;
+}
+
+let toastTimer;
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+updateLastSync();
+if (sheetId) {
+  updateSheetLink();
+  document.getElementById('setup-panel').style.display = 'none';
+}
+if (CLIENT_ID) {
+  document.getElementById('setup-client-btn').textContent = '⚙ Change setup';
+  loadGIS();
+}
+// Show setup wizard automatically on first open if no client ID saved
+if (!CLIENT_ID && !localStorage.getItem('bookshelf_dismissed_setup')) {
+  document.getElementById('setup-panel').insertAdjacentHTML('afterbegin',
+    `<div style="background:#fff7e6;border:1px solid #f0c060;border-radius:4px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:#7a5800">
+      <strong>To enable Google Sheets sync</strong>, click the <strong>⚙ Setup</strong> button in the top-right corner. Your books are saved locally in the meantime.
+      <button onclick="this.closest('div').remove();localStorage.setItem('bookshelf_dismissed_setup','1')" style="float:right;background:none;border:none;cursor:pointer;font-size:16px;color:#7a5800;margin-top:-2px">×</button>
+    </div>`
+  );
+}
+render();
+window.addEventListener('load', () => {
+  if (sheetId) document.getElementById('sheet-id-input').value = sheetId;
+});
+</script>
+</body>
+</html>
